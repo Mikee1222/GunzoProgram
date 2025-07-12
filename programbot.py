@@ -444,7 +444,9 @@ async def end_time_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         context.user_data.pop('is_update', None)
 
-    context.user_data.clear()
+    # Clear only temporary flow data, preserve the initiator for subsequent day selections
+    for key in ['day', 'shift', 'start', 'is_update']:
+        context.user_data.pop(key, None)
 
     days = ["Δευτέρα", "Τρίτη", "Τετάρτη", "Πέμπτη", "Παρασκευή", "Σάββατο", "Κυριακή"]
     keyboard = []
