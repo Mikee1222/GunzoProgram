@@ -121,7 +121,7 @@ async def user_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.answer(text=f"❌ Δεν είσαι ο @{selected} μηπως εισαι φρουτο ε; Είσαι ο...  @{actual}. Εγω θα στα πω;", show_alert=True)
         return SELECT_USER
     await query.answer()
-    await context.bot.delete_message(chat_id=update.effective_chat.id, message_id=query.message.message_id)
+    await context.bot.delete_message(chat_id=query.message.chat.id, message_id=query.message.message_id)
     # Store selected user
     context.user_data['user'] = query.data
     # Καταχώριση για χρήση στο /report
@@ -136,7 +136,7 @@ async def user_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
             label = f"📅 {d}"
         keyboard.append([InlineKeyboardButton(label, callback_data=d)])
     await context.bot.send_message(
-        chat_id=update.effective_chat.id,
+        chat_id=query.message.chat.id,
         text="Επίλεξε μέρα για να καταχωρήσεις πρόγραμμα:",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
@@ -149,7 +149,7 @@ async def day_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.answer(text="❌ Δεν έχεις δικαίωμα να χρησιμοποιήσεις αυτό το κουμπί.", show_alert=True)
         return
     try:
-        await context.bot.delete_message(chat_id=update.effective_chat.id, message_id=query.message.message_id)
+        await context.bot.delete_message(chat_id=query.message.chat.id, message_id=query.message.message_id)
     except BadRequest:
         pass
     day = query.data
@@ -171,7 +171,7 @@ async def day_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 label = f"📅 {d}"
             keyboard.append([InlineKeyboardButton(label, callback_data=d)])
         await context.bot.send_message(
-            chat_id=update.effective_chat.id,
+            chat_id=query.message.chat.id,
             text="Επίλεξε ημέρα που δεν έχεις καταχωρήσει ακόμα:",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
@@ -183,7 +183,7 @@ async def day_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
         emoji = "☀️" if s == "Πρωινή βάρδια" else ("🌙" if s == "Απογευματινή βάρδια" else "🛌")
         keyboard.append([InlineKeyboardButton(f"{emoji} {s}", callback_data=s)])
     await context.bot.send_message(
-        chat_id=update.effective_chat.id,
+        chat_id=query.message.chat.id,
         text=f"Επίλεξε βάρδια για {day}:",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
@@ -197,7 +197,7 @@ async def shift_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     await query.answer()
     try:
-        await context.bot.delete_message(chat_id=update.effective_chat.id, message_id=query.message.message_id)
+        await context.bot.delete_message(chat_id=query.message.chat.id, message_id=query.message.message_id)
     except BadRequest:
         pass
     shift = query.data
@@ -225,7 +225,7 @@ async def shift_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     label = f"📅 {d}"
                 keyboard.append([InlineKeyboardButton(label, callback_data=d)])
             await context.bot.send_message(
-                chat_id=update.effective_chat.id,
+                chat_id=query.message.chat.id,
                 text="Επέλεξε ημέρα:",
                 reply_markup=InlineKeyboardMarkup(keyboard)
             )
@@ -243,7 +243,7 @@ async def shift_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
             hours = [17, 18, 19, 20, 21, 22, 23, 24]
         keyboard = [[InlineKeyboardButton(f"🕒 {h}:00", callback_data=str(h))] for h in hours]
         await context.bot.send_message(
-            chat_id=update.effective_chat.id,
+            chat_id=query.message.chat.id,
             text=f"Επίλεξε ώρα έναρξης για {shift} της {day}:",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
@@ -282,13 +282,13 @@ async def shift_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 entry += f" {sh};"
             lines.append(entry)
         await context.bot.send_message(
-            chat_id=update.effective_chat.id,
+            chat_id=query.message.chat.id,
             text="\n".join(lines)
         )
         return ConversationHandler.END
     # Otherwise, confirm and show next day
     await context.bot.send_message(
-        chat_id=update.effective_chat.id,
+        chat_id=query.message.chat.id,
         text=f"✅ Καταχωρήθηκε {shift} της {day}."
     )
     days = ["Δευτέρα", "Τρίτη", "Τετάρτη", "Πέμπτη", "Παρασκευή", "Σάββατο", "Κυριακή"]
@@ -300,7 +300,7 @@ async def shift_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
             label = f"📅 {d}"
         keyboard.append([InlineKeyboardButton(label, callback_data=d)])
     await context.bot.send_message(
-        chat_id=update.effective_chat.id,
+        chat_id=query.message.chat.id,
         text="Επίλεξε επόμενη μέρα:",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
@@ -314,7 +314,7 @@ async def start_time_selected(update: Update, context: ContextTypes.DEFAULT_TYPE
         return
     await query.answer()
     try:
-        await context.bot.delete_message(chat_id=update.effective_chat.id, message_id=query.message.message_id)
+        await context.bot.delete_message(chat_id=query.message.chat.id, message_id=query.message.message_id)
     except BadRequest:
         pass
     start = query.data
@@ -330,7 +330,7 @@ async def start_time_selected(update: Update, context: ContextTypes.DEFAULT_TYPE
         hours = [12, 1, 2, 3, 4, 5]
     keyboard = [[InlineKeyboardButton(f"🕒 {h}:00", callback_data=str(h))] for h in hours]
     await context.bot.send_message(
-        chat_id=update.effective_chat.id,
+        chat_id=query.message.chat.id,
         text=f"Επίλεξε ώρα λήξης για {context.user_data.get('shift')} της {context.user_data.get('day')}:",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
@@ -349,7 +349,7 @@ async def end_time_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.answer(text="❌ Σφάλμα: Δεν βρέθηκε η βάρδια για ενημέρωση. Παρακαλώ ξεκίνα ξανά με /update.", show_alert=True)
         return ConversationHandler.END
     try:
-        await context.bot.delete_message(chat_id=update.effective_chat.id, message_id=query.message.message_id)
+        await context.bot.delete_message(chat_id=query.message.chat.id, message_id=query.message.message_id)
     except BadRequest:
         pass
     end = query.data
@@ -393,7 +393,7 @@ async def end_time_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 lines.append(entry)
         # Send summary to user
         await context.bot.send_message(
-            chat_id=update.effective_chat.id,
+            chat_id=query.message.chat.id,
             text="\n".join(lines)
         )
         # Debug logging for mapping and channel IDs
@@ -428,7 +428,7 @@ async def end_time_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Confirmation and next day
     await context.bot.send_message(
-        chat_id=update.effective_chat.id,
+        chat_id=query.message.chat.id,
         text=f"✅ Η {shift} της {day} από {start}:00 έως {end}:00 καταχωρήθηκε!"
     )
     # Notify admins if this was an update (edit)
@@ -457,7 +457,7 @@ async def end_time_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
             label = f"📅 {d}"
         keyboard.append([InlineKeyboardButton(label, callback_data=d)])
     await context.bot.send_message(
-        chat_id=update.effective_chat.id,
+        chat_id=query.message.chat.id,
         text="Επίλεξε επόμενη μέρα:",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
@@ -562,7 +562,7 @@ async def update_day_selected(update: Update, context: ContextTypes.DEFAULT_TYPE
     await query.answer()
     # Delete the original days selection message
     try:
-        await context.bot.delete_message(chat_id=update.effective_chat.id, message_id=query.message.message_id)
+        await context.bot.delete_message(chat_id=query.message.chat.id, message_id=query.message.message_id)
     except BadRequest:
         pass
     data = query.data
@@ -577,7 +577,7 @@ async def update_day_selected(update: Update, context: ContextTypes.DEFAULT_TYPE
         emoji = "☀️" if s=="Πρωινή βάρδια" else ("🌙" if s=="Απογευματινή βάρδια" else "🛌")
         keyboard.append([InlineKeyboardButton(f"{emoji} {s}", callback_data=s)])
     await context.bot.send_message(
-        chat_id=update.effective_chat.id,
+        chat_id=query.message.chat.id,
         text=f"Ενημέρωση για {day}: επίλεξε βάρδια",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
