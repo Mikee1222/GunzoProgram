@@ -584,37 +584,30 @@ async def update_day_selected(update: Update, context: ContextTypes.DEFAULT_TYPE
     return SELECT_SHIFT
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # Attempt to find the logo in cwd or script directory
-    logo_name = "gunzoagency.png"
-    logo_path = logo_name
-    if not os.path.exists(logo_path):
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        alt_path = os.path.join(script_dir, logo_name)
-        if os.path.exists(alt_path):
-            logo_path = alt_path
-    # Also check the user’s Documents folder
-    if not os.path.exists(logo_path):
-        docs_path = os.path.expanduser("~/Documents/" + logo_name)
-        if os.path.exists(docs_path):
-            logo_path = docs_path
+    logo_path = os.path.join(os.path.dirname(__file__), "gunzoagency.png")
     caption_text = (
+        "Εβδομαδιαίο Πρόγραμμα\n"
+        "----------------------\n"
+        "• Υποβολή προγράμματος κάθε Κυριακή έως τις 20:00 αυστηρά. Όποιος δεν υποβάλει το πρόγραμμα στο διάστημα αυτό δεν θα συμπεριλαμβάνεται στο πρόγραμμα της εβδομάδας.\n"
+        "• Κάθε χρήστης έχει δικαίωμα έως δύο (2) ρεπό ανά εβδομάδα.\n"
+        "• Ενημερώσεις (/update) επιτρέπονται μόνο εάν πραγματοποιηθούν τουλάχιστον δύο (2) ημέρες πριν την ημέρα της βάρδιας.\n\n"
         "👋 *Καλωσήρθες στο Bot Προγραμμάτων!*\n\n"
         "🗓️ `/makeprogram` – Ξεκίνα καταχώριση εβδομαδιαίου προγράμματος\n"
         "✅ `/done` – Πάρε περίληψη από τις μέχρι τώρα καταχωρίσεις\n"
-        "❌ `/cancel` – Ακύρωσε οποιαδήποτε εντολή\n\n"
+        "❌ `/cancel` – Ακύρωσε οποιαδήποτε εντολή\n"
+        "🔄 `/update` – Ενημέρωσε ήδη καταχωρημένο πρόγραμμα (επιλογή ημέρας & βάρδιας).\n"
+        "\n"
         "👉 Επίλεξε εντολή ή χρησιμοποίησε τα κουμπιά για να συνεχίσεις."
     )
-    if os.path.exists(logo_path):
-        with open(logo_path, "rb") as photo:
-            await context.bot.send_photo(
-                chat_id=update.effective_chat.id,
-                photo=photo,
-                caption=caption_text,
-                **reply_kwargs(update)
-            )
-    else:
-        print(f"Logo not found at {logo_name} in cwd or script dir")
-        await update.message.reply_text(caption_text, **reply_kwargs(update))
+    with open(logo_path, "rb") as photo_file:
+        await context.bot.send_photo(
+            chat_id=update.effective_chat.id,
+            photo=photo_file,
+            caption=caption_text,
+            parse_mode="Markdown",
+            **reply_kwargs(update)
+        )
+    return
 
 
 async def show_schedule(update: Update, context: ContextTypes.DEFAULT_TYPE):
