@@ -37,6 +37,61 @@ USER_CHANNELS = {
     "bull056": (-1002711207848, 8),
 }
 
+
+# Tier definitions for dynamic model assignment
+TIER_MODELS = {
+    "High": [
+        "Frika",
+        "Miss Frost"
+    ],
+    "Medium": [
+        "Areti",
+        "Lydia Fwtiadou",
+        "Eirini",
+        "Elvina",
+        "Marillia",
+        "Iwanna",
+        "Sabrina"
+    ],
+    "Low": [
+        "Silia",
+        "Natalia",
+        "Lina",
+        "Iris",
+        "Stefania",
+        "Barbie",
+        "Electra",
+        "Nina",
+        "Antwnia",
+        "Κωνσταντίνα Mummy",
+        "Gavriela",
+        "Χριστίνα"
+    ],
+    "USA": [
+        "Roxanna"
+    ],
+}
+
+# Map each chatter to their allowed tiers
+CHATTER_TIERS = {
+    "riggersss": ["Low", "Medium"],
+    "anastasiss12": ["High", "Medium", "Low"],
+    "elias_drag": ["Low", "Medium", "High"],
+    "mikekrp": ["High", "Medium"],
+    "kouzounias": ["Low", "Medium"],
+    "macraw99": ["Low"],
+    "maraggos": ["Low", "Medium", "High"],
+    "nikospapadop": ["Low", "Medium"],
+    "bull056": ["High", "Medium"],
+}
+
+# Build ALLOWED_MODELS dynamically from tiers
+ALLOWED_MODELS = {
+    uname: [model for tier in CHATTER_TIERS[uname] for model in TIER_MODELS[tier]]
+    for uname in CHATTER_TIERS
+}
+
+
 # Conversation states
 SELECT_USER, SELECT_DAY, SELECT_SHIFT, SELECT_START, SELECT_END, UPDATE_DAY = range(6)
 
@@ -662,6 +717,86 @@ async def report(update: Update, context: ContextTypes.DEFAULT_TYPE):
         lines.append(f"@{uname}: {status}")
     await update.message.reply_text("\n".join(lines), **reply_kwargs(update))
 
+# --- /models command: list each chatter and their assigned models ---
+async def models(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # List of models
+    model_names = [
+        "Lydia", "Miss Frost", "Lina", "Frika", "Iris", "Electra",
+        "Nina", "Eirini", "Marilia", "Areti", "Silia", "Iwanna",
+        "Elvina", "Stefania", "Elena", "Natalia", "Sabrina", "Barbie",
+        "Antwnia", "Κωνσταντίνα Mummy", "Gavriela", "Χριστίνα"
+    ]
+    # Extract chatters in consistent order
+    chatters = [
+        "riggersss", "anastasiss12", "basileiou", "elias_drag", "mikekrp",
+        "kouzounias", "macraw99", "maraggos", "nikospapadop", "bull056"
+    ]
+    # Assign two models per chatter
+    lines = ["📋 Αναθεση μοντέλων σε chatters:"]
+    for i, uname in enumerate(chatters):
+        assigned = model_names[2*i:2*i+2]
+        mention = f"@{uname}"
+        lines.append(f"{mention}: {', '.join(assigned)}")
+    await update.message.reply_text("\n".join(lines), **reply_kwargs(update))
+
+
+# --- /autoschedule command: automatic schedule with model assignments ---
+async def autoschedule(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    lines = ["📆 Αυτόματο εβδομαδιαίο πρόγραμμα:"]
+    # Specify days in order
+    days_order = ["Δευτέρα","Τρίτη","Τετάρτη","Πέμπτη","Παρασκευή","Σάββατο","Κυριακή"]
+    # Specify shift types and emojis
+    shift_types = [("Πρωινή βάρδια", "☀️"), ("Απογευματινή βάρδια", "🌙"), ("Ρεπό", "🛌")]
+    # Build header
+    for day in days_order:
+        lines.append(f"\n*{day}*")
+        # For each shift type, list chatters who recorded that shift on that day
+        allocation = {}  # allocation per shift type, will be overwritten but used for free models after both shifts
+        all_models = [m for tier in ["High","Medium","Low","USA"] for m in TIER_MODELS[tier]]
+        for shift, emoji in shift_types:
+            assigned = []
+            assigned_names = []
+            for uname, uid in USERNAME_TO_ID.items():
+                sch = user_schedules.get(uid, {})
+                day_entry = sch.get(day)
+                if isinstance(day_entry, dict) and shift in day_entry:
+                    info = day_entry[shift]
+                    if isinstance(info, dict) and 'start' in info:
+                        assigned.append(f"@{uname} ({info['start']}:00–{info['end']}:00)")
+                        assigned_names.append(uname)
+                    else:
+                        assigned.append(f"@{uname}")
+                        assigned_names.append(uname)
+            if assigned:
+                lines.append(f"{emoji} {shift}: " + ", ".join(assigned))
+            else:
+                lines.append(f"{emoji} {shift}: -")
+            # model allocation
+            if shift != "Ρεπό":
+                # Only allocate for non-empty shifts (assigned_names)
+                if assigned_names:
+                    allocation = {uname: [] for uname in assigned_names}
+                    idx = 0
+                    for model in all_models:
+                        candidates = [u for u in assigned_names if model in ALLOWED_MODELS.get(u,[])]
+                        if not candidates:
+                            continue
+                        chosen = candidates[idx % len(candidates)]
+                        allocation[chosen].append(model)
+                        idx += 1
+                    # append allocation lines
+                    for u, mods in allocation.items():
+                        lines.append(f"   @{u}: {', '.join(mods) if mods else '-'}")
+        # After shift allocations, list free models
+        allocated_models_day = [model for mods in allocation.values() for model in mods]
+        free_models = [m for m in all_models if m not in allocated_models_day]
+        if free_models:
+            lines.append("Free models: " + ", ".join(free_models))
+        else:
+            lines.append("Free models: -")
+    # Send the compiled schedule
+    await update.message.reply_text("\n".join(lines), parse_mode="Markdown", **reply_kwargs(update))
+
 
 # --- Weekly Reminder Job ---
 async def weekly_reminder(context: ContextTypes.DEFAULT_TYPE):
@@ -707,6 +842,10 @@ def main():
     app.add_handler(CommandHandler("done", done))
     # Προσθήκη εντολής /report για αναφορές
     app.add_handler(CommandHandler("report", report))
+    # Add /models command handler
+    app.add_handler(CommandHandler("models", models))
+    # Add /autoschedule command handler
+    app.add_handler(CommandHandler("autoschedule", autoschedule))
     conv = ConversationHandler(
         entry_points=[
             CommandHandler("makeprogram", add_schedule_start),
