@@ -128,7 +128,7 @@ async def user_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Store selected user
     context.user_data['user'] = query.data
     # Καταχώριση για χρήση στο /report
-    USERNAME_TO_ID[query.data] = query.from_user.id
+    USERNAME_TO_ID[query.data.lower()] = query.from_user.id
     # Proceed to day selection
     days = ["Δευτέρα", "Τρίτη", "Τετάρτη", "Πέμπτη", "Παρασκευή", "Σάββατο", "Κυριακή"]
     keyboard = []
@@ -425,7 +425,7 @@ async def end_time_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
             except Exception as e:
                 print(f"Failed to send summary for @{query.from_user.username}: {e}")
         # Ensure USERNAME_TO_ID is up to date for report
-        USERNAME_TO_ID[query.from_user.username] = query.from_user.id
+        USERNAME_TO_ID[query.from_user.username.lower()] = query.from_user.id
         # Record when the user completed this week
         LAST_SENT[user_id] = datetime.datetime.now()
         # Notify admins using numeric user IDs from USERNAME_TO_ID
@@ -524,7 +524,7 @@ async def done(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Record when the user completed this week via /done
         LAST_SENT[user_id] = datetime.datetime.now()
         # Populate for report
-        USERNAME_TO_ID[update.message.from_user.username] = user_id
+        USERNAME_TO_ID[update.message.from_user.username.lower()] = user_id
     return ConversationHandler.END
 
 
@@ -654,7 +654,7 @@ async def report(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Admin report: ποιοι έχουν ολοκληρώσει 7 ημέρες
     lines = ["📊 Αναφορά καταχώρησης προγραμμάτων:"]
     for uname, (ch_id, msg_id) in USER_CHANNELS.items():
-        uid = USERNAME_TO_ID.get(uname)
+        uid = USERNAME_TO_ID.get(uname.lower())
         if uid and len(user_schedules.get(uid, {})) == 7:
             status = "✅ Ολοκληρώθηκε"
         else:
